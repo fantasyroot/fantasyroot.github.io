@@ -1,8 +1,14 @@
 title: 日常文档整理
-description: share archive
-google_analytics: 
+description: Share Archive
+google_analytics:
 show_downloads: false
 theme: jekyll-theme-cayman
 
 gems:
-  - jekyll-mentions
+    - jekyll-mentions
+
+# Navigation buttons in the front page.s
+nav:
+    - { title: 所有文章, description: archive, url: '/archive' }
+    - { title: 标签, description: tags, url: '/tags' }
+    - { title: 关于我, description: about, url: '/about' }
