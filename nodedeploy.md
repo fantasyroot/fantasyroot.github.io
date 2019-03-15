@@ -10,13 +10,13 @@
 
 > 申请应用可参照：[申请新应用及发布](http://docs.alibaba-inc.com:8090/pages/viewpage.action?pageId=239013204)
 
-1. 先在 aone2 上申请新应用，找自己部门对应的 PE（共享@粟裕）审批。<br/><br/>
+1. 先在 aone2 上申请新应用，找自己部门对应的 PE（共享@粟裕）审批。<br/>
 
 2. git 代码仓库关联应用：找 SCM（共享@红巾）审批应用的 gitlab 代码模块，提醒 SCM 部署类型选 node.js。这样，在 aone2 应用里，代码模块里才会有应用的 git 仓库地址，后面才能成功新建日常(审核通过后有半个小时左右延迟)。
 
     ![Alt text](https://img.alicdn.com/tps/TB1wtBjKVXXXXXPXFXXXXXXXXXX-236-295.png)
 
-<br/><br/>
+<br/>
 
 ## 新建日常，申请代码变更
 
@@ -30,26 +30,26 @@
 }
 ```
 
-Node 应用的打包规范详见：[集团 Node 应用打包规范](http://docs.alibaba-inc.com:8090/pages/viewpage.action?spm=0.0.0.0.f8ADox&pageId=241992025)<br/><br/>
+Node 应用的打包规范详见：[集团 Node 应用打包规范](http://docs.alibaba-inc.com:8090/pages/viewpage.action?spm=0.0.0.0.f8ADox&pageId=241992025)<br/>
 
 2. 申请变更（新建日常时可同时申请）
    ![Alt text](https://img.alicdn.com/tps/TB10IlxKVXXXXbXXXXXXXXXXXXX-680-544.png)
 
-<br/><br/>
+<br/>
 
 ## 提交集成，进入日常，日常部署
 
 1. 申请变更之后，在“我的变更”中点“提交集成”。
 
-> -   第一次日常部署时，aone2 会 **自动分配日常服务器** ，给出日常环境服务器 ip 地址，如果第一次显示日常环境创建失败，请 10 分钟后重试日常部署。<br/><br/>
-> -   如果 aone 上部署失败，日志看不到，不要灰心，日志页面刷新个几十遍就会出来了。。。<br/><br/>
+> -   第一次日常部署时，aone2 会 **自动分配日常服务器** ，给出日常环境服务器 ip 地址，如果第一次显示日常环境创建失败，请 10 分钟后重试日常部署。<br/>
+> -   如果 aone 上部署失败，日志看不到，不要灰心，日志页面刷新个几十遍就会出来了。。。<br/>
 > -   如果日常部署失败了，找 SCM 也很忙没有回复的话，可以加旺旺群【群号 1424680928 密码 ali20140919】，在群里问问题，一般还是可以得到回复的。
 
 -   日常部署会做以下事情： 1. 日常构建打包，会在临时的被随机分配的机器上执行。构建会通过命令`sh bin/build.sh daily`，执行自己应用下的 build.sh（如何写 build.sh 可以参照这一份[build.sh](http://gitlab.alibaba-inc.com/cm/goldeneye-node/blob/master/bin/build.sh)）。 2. 打开 build.sh 可以看到，构建过程实际上是首先用 nvm 安装了 node，然后安装了 tnpm，执行了 tnpm install。日常环境下构建，执行 build.sh 时会带上 daily 参数（预发下是 prepub，生产环境下是 publish），我们可以根据\$1 参数，获取到当前的环境，并把当前的环境输出到一个文件（.env）里。这样部署后，我们的 node 应用可以通过读取这个文件的内容，获取当前的 NODE_ENV。 3. 构建完成后，会将所有文件打包成 tar.gz 压缩包，然后上传到我们的日常服务器上去，解压缩。日常服务器会执行`nodejsctl start`命令启动应用，然后执行`preload.sh`检测 node 应用是否开启成功（检测原理下面会提到），如果返回 success 则会自动启动 nginx，至此日常部署完成。
 
 2. 日常域名申请：参照[测试环境域名管理](http://docs.alibaba-inc.com/pages/viewpage.action?pageId=248128184)
    黄金眼申请到的日常地址是：[http://goldeye.daily.taobao.net/](http://goldeye.daily.taobao.net/)。
-   注：如果要申请的是\*.daily.taobao.net 的域名，走[ATEP](https://atep.alibaba-inc.com/myatep)系统， **默认就支持 https** ，域名解析会自动指向我们的日常机器，不需要自己再配置。如果是非业务的想应用申请域名，可以在[KFC](http://kfc.alibaba-inc.com/#/resource/new/dns)系统里自行申请。<br/><br/>
+   注：如果要申请的是\*.daily.taobao.net 的域名，走[ATEP](https://atep.alibaba-inc.com/myatep)系统， **默认就支持 https** ，域名解析会自动指向我们的日常机器，不需要自己再配置。如果是非业务的想应用申请域名，可以在[KFC](http://kfc.alibaba-inc.com/#/resource/new/dns)系统里自行申请。<br/>
 3. 部署不顺利怎么办？登陆日常服务器查错。
    如果需要登陆日常环境服务器（你一定会需要的）排查错误或安装东西： 1. 首先去[KFC](http://kfc.alibaba-inc.com/#/resource/server/account/push)申请对应日常服务器 ip【 **应用管理员** 】权限（黄金眼日常是`10.189.197.77`）。 2. 通过 ssh 登陆后，先执行`sudo su admin`，切换到 admin 用户身份。应用的目录在`/home/admin/`下。例如黄金眼的应用源码目录：`/home/admin/goldeneye-node/target/goldeneye-node/`。 3. 第一次部署如果服务器没启动 nginx，则需要手动启动 nginx，执行`/home/admin/cai/bin/nginxctl start`。
    如果因为健康检查的原因，nginx 没启动起来，可以修改一下 nginx 配置文件：`vim /home/admin/cai/conf/nginx-proxy.conf`
@@ -65,7 +65,7 @@ location = /check.node {
 }
 ```
 
-<br/><br/>
+<br/>
 
 ### 日常部署其他常见报错及解决办法
 
@@ -83,14 +83,14 @@ location = /check.node {
 
 -   **其他要注意** ：不管出什么问题，千万 **不要删除** 服务器上`/home/admin/goldeneye-node`这个目录。不要试图删掉这个目录，认为再次部署会重建目录，不会的！！要改最多改到`target/goldeneye-node/`里面的内容，千万别把`target/goldeneye-node/`目录外面的东西删了，不然要联系 SCM 重新分配日常机器，重建日常环境！。。。
 
-<br/><br/>
+<br/>
 
 ## 预发部署
 
-1. 日常环境自测没问题后，Aone 2 进入预发环境，点击预发部署，然后勾选变更，由日常环境进入预发：![进入预发](https://gw.alicdn.com/tps/TB1xm0SLXXXXXXMXpXXXXXXXXXX-792-262.png)<br/><br/>
-2. 第一次预发部署由于没有机器，预发部署会失败。不用担心，就预发部署一次，第一次失败后 Aone 会给出申请预发机器的入口：![预发申请机器入口](https://img.alicdn.com/tps/TB1GffMKVXXXXaZXFXXXXXXXXXX-939-345.png) 点击申请机器和线上域名。详见[新应用上线新流程使用帮助说明](http://docs.alibaba-inc.com:8090/pages/viewpage.action?spm=0.0.0.0.4GKXbh&pageId=245970375)。同时数据库在 iDB 上也要申请上线。<br/><br/>
+1. 日常环境自测没问题后，Aone 2 进入预发环境，点击预发部署，然后勾选变更，由日常环境进入预发：![进入预发](https://gw.alicdn.com/tps/TB1xm0SLXXXXXXMXpXXXXXXXXXX-792-262.png)<br/>
+2. 第一次预发部署由于没有机器，预发部署会失败。不用担心，就预发部署一次，第一次失败后 Aone 会给出申请预发机器的入口：![预发申请机器入口](https://img.alicdn.com/tps/TB1GffMKVXXXXaZXFXXXXXXXXXX-939-345.png) 点击申请机器和线上域名。详见[新应用上线新流程使用帮助说明](http://docs.alibaba-inc.com:8090/pages/viewpage.action?spm=0.0.0.0.4GKXbh&pageId=245970375)。同时数据库在 iDB 上也要申请上线。
 
-3. 再进行一次预发部署。<br/><br/>
+3. 再进行一次预发部署。
 
 4. 登陆预发机器排错。
 
@@ -107,7 +107,7 @@ location = /check.node {
 6. 部署成功后，访问预发页面：
    电脑绑定预发 host：`110.75.98.154 pre.ge.taobao.com`，然后访问[pre.ge.taobao.com](pre.ge.taobao.com)。需要绑定的 host 在 Aone 的预发部署页面“预发测试绑定平台”里可以看到：![预发绑定](https://gw.alicdn.com/tps/TB1qBFxLXXXXXaLXVXXXXXXXXXX-1932-732.png)
 
-<br/><br/>
+<br/>
 
 ## 应用上线
 
@@ -120,7 +120,7 @@ location = /check.node {
 5. 如果申请了线上域名，比如`*.taobao.com`，则要走 VIP 申请审批流程。这里的 VIP 是外面可以访问的一个 ip，对应用分组的机器做了负载均衡。首先 PE 创建工单，然后安全@墨禅会审批，给安全的同学描述一下为什么申请 VIP（为什么要暴露给外网）。
 6. VIP 审批成功以后，系统会走域名审批流程。`*.taobao.com`的域名归属人是@圆心，PE 审批完以后，需要@圆心最终审批。注：`*.taobao.com`二级域名名字长度必须 **大于 4 个字母** ，否则@圆心不会审批通过。。
 
-<br/><br/>
+<br/>
 
 ## 接入集团 HTTPS（可选）
 
@@ -130,17 +130,9 @@ location = /check.node {
 2. 上一步完成，注册了域名以后，到 psp 提交[统一接入申请单](http://psp.alibaba-inc.com/paas/uniconnect/appApply.htm)。注意“VipServer Key 名称”要填的是 **域名名称** ，不是 token。
 3. 工单审批完成后，自己先验证 VIP 绑定，如果验证没有问题，通知 PE 切域名。wagbridge.taobao.com ，hz.wagbridge.taobao.com ，sh.wagbridge.taobao.com，dig 一下域名的 VIP，绑定验证，根据你的机房部署，第一个是杭州+上海，第 2 个是杭州，第 3 个是上海。HTTPS 方面如果有问题可以找@千山。
 
-<br/><br/>
+<br/>
 
 ## 其它
-
-### 黄金眼机器：
-
--   日常：10.189.197.77
--   预发：10.176.72.179
--   线上：10.176.130.122，10.176.121.150，10.176.130.121，10.176.130.123
--   跳板机：login1.cm3.alibaba.org
--   vip：140.205.76.9
 
 ### 接入 AliNode
 
@@ -168,7 +160,7 @@ location = /check.node {
 -   放弃使用 pm2 的原因： 1. 服务器上不支持全局安装 pm2 的 npm 包，启动命令是集团约定写死的诸如`node server.js`，无法使用`pm2 start` 启动应用。 2. pm2 所有操作均为命令操作，而由于第一点的原因，服务器上不方便也无法进行命令操作。 3. pm2 虽然暴漏出几个 api 供 web 调用（比如 pm2 list），但返回的都是 json 数据，没有实现好的可视化页面。 4. 由于以上几点原因，如果继续使用 pm2，也只能用到其最简单的功能（cluster 和错误自动重启），这和 cfork 没有什么区别了。所以不如使用更轻量的 cfork。 5. D2 大会上，不四也提到了 pm2 太重，集团内的场景推荐使用更轻量的 cfork，天猫那边也是使用了 cfork。
 -   所以，最终我们还是选择了 cfork。
 
-<br/><br/>
+<br/>
 
 ## Q&A
 
@@ -191,13 +183,7 @@ location = /check.node {
 -   日常环境机器，进入日常后，第一次日常部署自动提供。日常的域名申请参见上文。
 -   预发机器和线上机器，第一次预发部署失败后，Aone 会有申请入口，填一下申请单就 ok 了。
 
-### pe 和 scm 的职责区别？哪些问题找 PE？哪些找 SCM？
-
--   简单来说，日常相关的问题找 SCM，线上相关的问题找 PE。
--   日常的机器如果想装东西或者改配置，都是找 SCM；线上机器的问题，都是找 PE。
--   共享的 SCM：@红巾，PE：@粟裕，DBA@冷之。aone 相关的答疑，可以找 SCM@红巾或者旺旺@aone 配置管理答疑。
-
-<br/><br/>
+<br/>
 
 ## 参考资料
 

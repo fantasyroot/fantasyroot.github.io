@@ -7,8 +7,11 @@
 ## cookie 和 session
 
 token 机制是一般都是依赖于 session 的。而 session 可以存放在内存、cookie、数据库中或 redis 等缓存中。其中使用 redis 或 memcatch 等缓存的方案比较常见，存数据库的查询效率比较低，存 cookie 有受浏览器 cookie 容量限制的问题。
+
 关于 cookie 和 session 的关系，可以看下这篇文章：[cookie 和 session](https://github.com/alsotang/node-lessons/tree/master/lesson16)
+
 koa-csrf 依赖于 koa-session，而 koa-session 是基于 cookie 实现的客户端 session，这样在高并发的情况下可以大大减轻服务器的资源开销，不需要服务端存储 session，节省了至少一台 redis 服务器。但由于依赖 cookie，所以存储空间受限，不适用于在 session 中大量存数据。
+
 关于究竟应该在客户端存 session，还是服务端存 session，两年前有一场激烈的讨论：[客户端 session vs 服务端 session](https://cnodejs.org/topic/53971784a087f45620ea988a)（当然，答案是适合的应用场景不同，各有利弊）。。但是对于黄金眼项目来说，cluster 模式+分布式的架构，服务端内存存储 session 的办法没法共享状态肯定不行，剩下两条路都可以：要么搞一台 redis 缓存服务器（成本稍高了点），要么基于 cookie 在客户端存 session。后者是 koa-session 的模式，而且简单方便，我们也不需要在 session 中存很多数据，就用这个啦。
 
 ## token 和盐
@@ -32,7 +35,8 @@ Tokens.prototype._tokenize = function tokenize(secret, salt) {
 
 > 盐（Salt），在密码学中，是指通过在密码任意固定位置插入特定的字符串，让散列后的结果和使用原始密码的散列结果不相符，这种过程称之为“加盐”。加盐后的散列值，可以极大的降低由于用户数据被盗而带来的密码泄漏风险，即使通过彩虹表寻找到了散列后的数值所对应的原始内容，但是由于经过了加盐，插入的字符串扰乱了真正的密码，使得获得真实密码的概率大大降低。
 
-> 以用户输入用户名和密码注册与登录为例：所谓加 salt，就是加点“佐料”。当用户首次提供密码时（通常是注册时），由系统自动往这个密码里加一些“salt 值”，这个值是由系统随机生成的，然后再散列。而当用户登录时，系统为用户提供的代码撒上同样的“salt 值”，然后散列，再比较散列值，已确定密码是否正确。 　　
+> 以用户输入用户名和密码注册与登录为例：所谓加 salt，就是加点“佐料”。当用户首次提供密码时（通常是注册时），由系统自动往这个密码里加一些“salt 值”，这个值是由系统随机生成的，然后再散列。而当用户登录时，系统为用户提供的代码撒上同样的“salt 值”，然后散列，再比较散列值，已确定密码是否正确。
+
 > 这样做的好处是什么呢？加盐后，即便两个用户使用了同一个密码，由于系统为它们生成的 salt 值不同，他们的散列值也是不同的。即便黑客可以通过自己的密码和自己生成的散列值来找具有特定密码的用户，但这个几率太小了，因为密码和 salt 值都必须和黑客使用的一样才行。
 
 另外再分享两篇不错的文章：
@@ -65,33 +69,7 @@ Tokens.prototype._tokenize = function tokenize(secret, salt) {
 
 用一张图说明：
 
-```sequence
-Title: Koa-csrf的token机制
-Browser->Koa csrf: request page
-Koa csrf->Session层(基于客户端cookie): get secret
-Session层(基于客户端cookie)->Session层(基于客户端cookie): no secret
-Session层(基于客户端cookie)-->Koa csrf: null
-Koa csrf->Csrf: get new secret
-Csrf->Csrf:create secret
-Csrf-->Koa csrf: secret
-Koa csrf->Session层(基于客户端cookie): set secret
-Session层(基于客户端cookie)->Session层(基于客户端cookie): save secret
-Koa csrf-> Csrf: get new token(secret)
-Csrf->Csrf:create new salt
-Csrf->Csrf:token = crypto(salt + secret)
-Csrf--> Koa csrf: 包含salt的新token
-Koa csrf-->Browser: token
-Browser->Koa csrf: post request(token)
-Koa csrf->Session层(基于客户端cookie): get secret
-Session层(基于客户端cookie)->Session层(基于客户端cookie): secret
-Session层(基于客户端cookie)-->Koa csrf: secret
-Koa csrf->Csrf: verify(secret,token)
-Csrf->Csrf:从token中提取salt'
-Csrf->Csrf:token' = crypto(salt' + secret)
-Csrf->Csrf:token' == token ?
-Csrf-->Koa csrf: result
-Koa csrf-->Browser: result
-```
+<image src="https://p1.music.126.net/gW-0jRbNMkTc952WHOsmDg==/109951163927039113.png" width="600px"/>
 
 ## 更多安全的考虑
 

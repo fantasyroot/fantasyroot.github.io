@@ -179,10 +179,6 @@ __webpack_public_path__ =
 -   优化之后会多出一个获取当前页面 js 模块的 http 请求，但可以明显看出优化后的 js 已经比原来的 js 体积小了很多，在逻辑比较少的页面(如上图)尤其明显，可以由原来的 **238KB** 减少到 162 + 2.7 = **164.7KB**
 -   ps：优化之后的其实还加了新需求，包含新增了的两个页面 ;-)
 
-## 项目仓库
-
--   [无线服务市场 gitlab](http://gitlab.alibaba-inc.com/sj/h5.qnservice)
-
 ## 参考文章
 
 -   [React router 官网提供的按需加载 demo](https://github.com/ReactTraining/react-router/tree/master/examples/huge-apps)
