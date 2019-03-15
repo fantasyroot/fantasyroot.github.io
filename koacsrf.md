@@ -1,0 +1,99 @@
+# 以 koa-csrf 为例，探索防范 CSRF 的 token 机制
+
+> CSRF（Cross-site request forgery 跨站请求伪造）攻击一般通过伪装来自受信任用户的请求来利用受信任的网站。关于 CSRF 的防范理解，强烈建议阅读这篇文章：[Understanding CSRF](https://github.com/pillarjs/understanding-csrf)
+
+[黄金眼](http://goldeneyes.taobao.com/)项目使用了[`koa-csrf`](http://npm.taobao.net/package/koa-csrf)的 token 机制防范 CSRF 攻击。
+
+## cookie 和 session
+
+token 机制是一般都是依赖于 session 的。而 session 可以存放在内存、cookie、数据库中或 redis 等缓存中。其中使用 redis 或 memcatch 等缓存的方案比较常见，存数据库的查询效率比较低，存 cookie 有受浏览器 cookie 容量限制的问题。
+关于 cookie 和 session 的关系，可以看下这篇文章：[cookie 和 session](https://github.com/alsotang/node-lessons/tree/master/lesson16)
+koa-csrf 依赖于 koa-session，而 koa-session 是基于 cookie 实现的客户端 session，这样在高并发的情况下可以大大减轻服务器的资源开销，不需要服务端存储 session，节省了至少一台 redis 服务器。但由于依赖 cookie，所以存储空间受限，不适用于在 session 中大量存数据。
+关于究竟应该在客户端存 session，还是服务端存 session，两年前有一场激烈的讨论：[客户端 session vs 服务端 session](https://cnodejs.org/topic/53971784a087f45620ea988a)（当然，答案是适合的应用场景不同，各有利弊）。。但是对于黄金眼项目来说，cluster 模式+分布式的架构，服务端内存存储 session 的办法没法共享状态肯定不行，剩下两条路都可以：要么搞一台 redis 缓存服务器（成本稍高了点），要么基于 cookie 在客户端存 session。后者是 koa-session 的模式，而且简单方便，我们也不需要在 session 中存很多数据，就用这个啦。
+
+## token 和盐
+
+token 是怎样炼成的：
+<b>token = crypto(salt + secret)</b>
+
+核心代码：
+
+```js
+Tokens.prototype._tokenize = function tokenize(secret, salt) {
+    var hash = crypto
+        .createHash('sha1')
+        .update(salt + '-' + secret, 'ascii')
+        .digest('base64');
+    return escape(salt + '-' + hash);
+};
+```
+
+如果您之前对密码学里“盐”（salt）的概念不太了解，可以往下看：
+
+> 盐（Salt），在密码学中，是指通过在密码任意固定位置插入特定的字符串，让散列后的结果和使用原始密码的散列结果不相符，这种过程称之为“加盐”。加盐后的散列值，可以极大的降低由于用户数据被盗而带来的密码泄漏风险，即使通过彩虹表寻找到了散列后的数值所对应的原始内容，但是由于经过了加盐，插入的字符串扰乱了真正的密码，使得获得真实密码的概率大大降低。
+
+> 以用户输入用户名和密码注册与登录为例：所谓加 salt，就是加点“佐料”。当用户首次提供密码时（通常是注册时），由系统自动往这个密码里加一些“salt 值”，这个值是由系统随机生成的，然后再散列。而当用户登录时，系统为用户提供的代码撒上同样的“salt 值”，然后散列，再比较散列值，已确定密码是否正确。 　　
+> 这样做的好处是什么呢？加盐后，即便两个用户使用了同一个密码，由于系统为它们生成的 salt 值不同，他们的散列值也是不同的。即便黑客可以通过自己的密码和自己生成的散列值来找具有特定密码的用户，但这个几率太小了，因为密码和 salt 值都必须和黑客使用的一样才行。
+
+另外再分享两篇不错的文章：
+
+-   [为什么要在密码里加点“盐”](http://www.libuchao.com/2013/07/05/password-salt)
+-   [加盐 hash 保存密码的正确方式](http://drops.wooyun.org/papers/1066)
+
+好了，盐的概念我们已经了解了。下面是实现过程。
+
+## koa-csrf 的 token 机制实现过程
+
+-   用户请求页面时，
+
+    1. 服务端为用户当前 session 生成 secret 值，并存到 session 里；
+    2. 服务端为用户生成 salt 值；
+    3. 服务端将 salt 值和 secret 连接到一起；
+    4. 对连接后的值进行散列，得到 Hash 值；
+    5. 将 Hash 值（即 token）埋到页面里。
+
+-   用户写操作，发 post 请求时，
+
+    1. 用户提供 Hash 值（即 token）；
+    2. 服务端从 token 中提取出 salt 值；
+    3. 服务端从当前 session（基于 cookie 的）找到 secret 值；
+    4. 服务端将 secret 值和用户的 salt 值连接到一起；
+    5. 对连接后的值进行散列，得到 Hash'（注意有个“撇”）；
+    6. 比较 Hash 和 Hash'是否相等，相等则 token 检验正确，否则校验失败。
+
+-   注： salt 每次请求都会重新生成，secret 存在客户端 session 里（即 cookie 里），生命周期与 cookie 相同。
+
+用一张图说明：
+
+```sequence
+Title: Koa-csrf的token机制
+Browser->Koa csrf: request page
+Koa csrf->Session层(基于客户端cookie): get secret
+Session层(基于客户端cookie)->Session层(基于客户端cookie): no secret
+Session层(基于客户端cookie)-->Koa csrf: null
+Koa csrf->Csrf: get new secret
+Csrf->Csrf:create secret
+Csrf-->Koa csrf: secret
+Koa csrf->Session层(基于客户端cookie): set secret
+Session层(基于客户端cookie)->Session层(基于客户端cookie): save secret
+Koa csrf-> Csrf: get new token(secret)
+Csrf->Csrf:create new salt
+Csrf->Csrf:token = crypto(salt + secret)
+Csrf--> Koa csrf: 包含salt的新token
+Koa csrf-->Browser: token
+Browser->Koa csrf: post request(token)
+Koa csrf->Session层(基于客户端cookie): get secret
+Session层(基于客户端cookie)->Session层(基于客户端cookie): secret
+Session层(基于客户端cookie)-->Koa csrf: secret
+Koa csrf->Csrf: verify(secret,token)
+Csrf->Csrf:从token中提取salt'
+Csrf->Csrf:token' = crypto(salt' + secret)
+Csrf->Csrf:token' == token ?
+Csrf-->Koa csrf: result
+Koa csrf-->Browser: result
+```
+
+## 更多安全的考虑
+
+-   使用 cookie 签名。对 cookie 做 hash 签名认证，客户端如果通过修改 cookie 的方来修改了 session，那么验证不会通过。
+-   使用 httponly 来避通过免通过 js 获取 cookie 内容。
