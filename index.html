@@ -1,13 +1,15 @@
 ---
 layout: default
-title: 主页
+title: 日常文档整理
 ---
 
 <ul>
     {% for post in site.posts %}
     <li>
         {{ post.date | date: '%Y-%m-%d' }}
-        <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a>
+        <a href="{{ site.baseurl }}{{ post.url }}" target="_blank">{{
+            post.title
+        }}</a>
     </li>
     {% endfor %}
 </ul>
