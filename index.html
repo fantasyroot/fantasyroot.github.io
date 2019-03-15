@@ -1,11 +1,11 @@
 ---
 layout: default
-title: 日常分享整理
+title: 日常分享存档
 ---
 
 <ul>
     {% for post in site.posts %}
-    <li style="margin: 5px 0">
+    <li style="margin: 7px 0">
         {% comment %} {{ post.date | date: '%Y-%m-%d' }} {% endcomment %}
         {{ post.date | date: '%Y-%m' }}
         <a href="{{ site.baseurl }}{{ post.url }}" target="_blank">{{
