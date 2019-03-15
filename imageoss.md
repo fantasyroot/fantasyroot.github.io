@@ -1,6 +1,6 @@
 ---
 title: 前端图片压缩与上传 OSS 组件实现
-layout: post
+layout: default
 date: 2017-01-03
 tag: oss
 ---

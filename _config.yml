@@ -8,6 +8,3 @@ gems:
     - jekyll-mentions
 
 permalink: /:year/:month/:title/
-
-paginate: 20
-paginate_path: 'blog/page:num/'
