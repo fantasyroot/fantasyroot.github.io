@@ -191,9 +191,7 @@ location = /check.node {
 ## 参考资料
 
 -   Node.js 阿里手册（集团官方部署文档）：[http://node.alibaba-inc.com/deploy/nodejs.html](http://node.alibaba-inc.com/deploy/nodejs.html)
-
 -   midway 上的部署流程参考：[https://midway.taobao.net/docs/deploy/index.html](https://midway.taobao.net/docs/deploy/index.html)
-
 -   ATA 上关于 node 应用部署的文章：
     -   [nodejs 应用接入、部署流程整理](http://www.atatech.org/articles/39606)
     -   [如何发布一个 node 应用](http://www.atatech.org/articles/16767)

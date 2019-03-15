@@ -1,5 +1,5 @@
 # Blog
 
-一些之前日常整理的文档。
+一些之前的日常分享。
 
 Github page: [http://fantasyroot.github.io/blog/](http://fantasyroot.github.io/blog/)
