@@ -194,8 +194,8 @@ V8 早期没有生成字节码，直接生成机器码，比较激进（图片 f
 ## 其他参考附录
 - [借助Service Worker和cacheStorage缓存及离线开发](https://www.zhangxinxu.com/wordpress/2017/07/service-worker-cachestorage-offline-develop/)
 - 云设计工具性能优化的几个方向：[酷家乐 CF](https://cf.qunhequnhe.com/pages/viewpage.action?pageId=80377538543)
-- [理解 V8 的字节码「译」 - 知乎](https://zhuanlan.zhihu.com/p/28590489): 
-- V8为什么又重新引入字节码？：[13 | 字节码（一）：V8为什么又重新引入字节码？-极客时间](https://time.geekbang.org/column/article/224206)
+- [理解 V8 的字节码「译」 - 知乎](https://zhuanlan.zhihu.com/p/28590489)
+- [字节码（一）：V8为什么又重新引入字节码？-极客时间](https://time.geekbang.org/column/article/224206)
 - [揭秘：支付宝小程序 V8 Worker 技术演进 - SegmentFault 思否](https://segmentfault.com/a/1190000022813290)
 - [知乎：精读《V8 引擎 Lazy Parsing》](https://zhuanlan.zhihu.com/p/63326335)
 - [PPT: V8 Parser design: Two parsers](https://docs.google.com/presentation/d/1214p4CFjsF-NY4z9in0GEcJtjbyVQgU0A-UqEvovzCs/edit#slide=id.g178dcb5b04_0_247)
