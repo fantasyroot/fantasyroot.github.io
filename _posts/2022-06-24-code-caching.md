@@ -17,21 +17,21 @@ Sourcemap 解决了源代码被压缩和混淆，导致 debug 困难的问题。
 
 ![](https://qhstaticssl.kujiale.com/image/png/1656061126252/6572F40EFD5469B27CA1DAB842880710.png)
 
-##### 问题1：sourcemap 是在哪里配置生成的？
+#### 问题1：sourcemap 是在哪里配置生成的？
 webpack 里可以配置 sourcemap 的生成类型，`devTools` 的可选配置项很多，可以在构建速度和调试方便性取一个平衡。这里不再赘述。
 
-##### 问题2：浏览器怎么知道源文件和 sourcemap 文件的对应关系？
+#### 问题2：浏览器怎么知道源文件和 sourcemap 文件的对应关系？
 一般在文件最后会加一句：//# sourceMappingURL=xxx.js.map，表明该源文件对应的 map 文件地址。除了这种常规方式之外，也可以在 response header 的 `SourceMap: <url>` 字段来表明。
 注：source map 只有在打开 dev tools 的情况下才会开始下载。
 
-##### 问题3： sourcemap 是如何对应到源代码的？
+#### 问题3： sourcemap 是如何对应到源代码的？
 `mappings` 的内容是 Base64 VLQ 的编码表示的，尽可能减小 map 文件体积。
 - 分号：生成的文件的每一行用分号(;)分隔，一个分号代表转换后源码的一行
 - 逗号，位置对应，每一段用逗号(,)分隔，一个逗号对应转换后源码的一个位置
 - 英文字母，每一段由1，4或5块可变长度的字段组成，记录原始代码的位置信息。
 详细的编码规则和示例网上有很多介绍，不再赘述。例如：[何为SourceMap？讲讲SourceMap食用姿势](https://mp.weixin.qq.com/s/UMDVbq1V-hmVKibweaoURQ)
 
-##### 问题4：pub 打包出来的 js 其实并没有 //# sourceMappingURL 这行，那么是怎么映射的呢？
+#### 问题4：pub 打包出来的 js 其实并没有 //# sourceMappingURL 这行，那么是怎么映射的呢？
 pub 基于 serviceworker 为所有带有 "pn" 和 "ps" 参数的 js 文件添加了 sourcemap 配置，开发者调试时浏览器能自动映射到源文件。
 sit 和 prod 是两个不同的 sw 文件，所以 prod 不会自动添加 sourcemap，防止源码泄露。
 
@@ -44,7 +44,7 @@ pub 通过 **serviceworker** 拦截 fetch 事件，注入 sourcemap 注释，[�
 
 ![code](https://qhstaticssl.kujiale.com/image/png/1656061125981/B043762211126B4DCC14036FD7FE5098.png)
 
-##### 问题5：那线上代码如何用 sourcemap 调试，又防止源码被别人查看呢？
+#### 问题5：那线上代码如何用 sourcemap 调试，又防止源码被别人查看呢？
 线上想源码调试的话，可以按照 [此规则对应关系(仅内网访问)](https://cf.qunhequnhe.com/pages/viewpage.action?pageId=80305366884#id-1.2.1.1pub%E5%BC%80%E5%8F%91%E6%89%8B%E5%86%8C-%E4%B8%83%E3%80%81%E8%B0%83%E8%AF%95%E7%BA%BF%E4%B8%8A%E4%BB%A3%E7%A0%81) 手动在 devtools 里加 sourcemap。
 这个方案还不够完美，我给 pub 提了改进建议，做成小工具，更方便且规避代码泄露风险。
 
@@ -67,7 +67,7 @@ Service workers 可以拦截页面中的网络资源请求，当你发送请求
 2. service worker 运行在 worker 上下文，不能访问 DOM
 3. 如果一个页面有多个 sw 脚本共存会有污染，可能需要先 unregister。目前酷家乐全站只有一个根路径下的 sw。
 
-##### 问题：为啥云设计工具要把 js 脚本缓存在 cache storage 里？？
+#### 问题：为啥云设计工具要把 js 脚本缓存在 cache storage 里？？
 这里的主要目的不是为了离线缓存，而是 **触发 V8 主动 code caching**，避免二次编译。
 
 ## V8 Code Caching
@@ -87,7 +87,7 @@ V8 使用 JIT (Just in time compilation) 来执行 JavaScript 代码，也就是
 
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125727/4468BCB51E454D6DE4649242B38B3BD2.png)
 
-#### code caching 原理
+### code caching 原理
 V8 code caching 的原理（官博解释：[Code caching · V8](https://v8.dev/blog/code-caching)）是：
 1. 第一次运行 JS 脚本的时候同时会生成该 JS 脚本的字节码缓存，并保存在本地磁盘，
 2. 第二次再运行同一个脚本的时候，V8 可以利用第一次保存的字节码缓存重建 Compile 结果，这样就不需要重新编译。
@@ -111,39 +111,39 @@ code caching 在 V8 内的具体行为：
 
 Chrome  从 42 开始引入 code caching（ref：[Chromium Blog: New JavaScript techniques for rapid page loads](https://blog.chromium.org/2015/03/new-javascript-techniques-for-rapid.html)），chrome 66 进行了改进。从原来只缓存 IIFE，优化为可以为整个文件缓存，尽可能缓存更多内容。
 
-##### 问题1：为什么在 warm run 阶段我们才会生成code cache呢？  
+#### 问题1：为什么在 warm run 阶段我们才会生成code cache呢？  
 1. 因为实际上很多文件我们确实只会遇见一次，如果每一份文件都要执行序列化并缓存会造成很大的浪费。
 2. 因此，只有在 72h 内至少看到 **两次相同** 的脚本时，Chrome 才会做 code caching。
 3. 另外，1KB 以内的小文件不会被 code cache，所以大于 1KB 的脚本就不应该用内联脚本，否则无法被缓存。
 
-##### 问题 2：如何主动触发 Code caching？
+#### 问题 2：如何主动触发 Code caching？
 [Code caching for JavaScript developers · V8](https://v8.dev/blog/code-caching-for-devs) 官方博客提到了一些最佳实践。
 1. 其中一种方式是把 js 缓存在 service worker 的 Cache Storage 里。当资源被放入 service worker 中时，会生成完整的代码缓存（编译所有内容）。具体操作：在 install 事件里，利用 cache API 把需要被缓存的 js 加到 cache 里。V8 会直接把所有代码进行编译做 code caching。
 2. 另外还可以包装成 IIFE（这种方式可能滥用官方不推荐，原因是会 parse 可能不被运行的函数而降低冷启动性能并且内存占用增大，惰性解析优化也会失效。
 于是这里解答了，“为什么云设计工具把公共 js 放在了 service worker 缓存里”的问题。
 
-##### 问题 3：为啥包装成 IIFE 会更快呢？
+#### 问题 3：为啥包装成 IIFE 会更快呢？
 比如 [GitHub - nolanlawson/optimize-js: Optimize a JS file for faster parsing (UNMAINTAINED)](https://github.com/nolanlawson/optimize-js) optimize-js 这个包曾用于把普通函数变成 IIFE，后来不维护了。
 IIFE 更快的原理是非 IIFE 会先被预解析然后再被完整解析，共被解析两次。而 IIFE 可以跳过预解析直接完整解析。
 预解析只会做语法分析和错误检查，不会生成 AST，关于预解析参考  [Blazingly fast parsing, part 2: lazy parsing · V8](https://v8.dev/blog/preparser#pife)
 
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125668/F6CDB02517E6C155ABEDA2F20D924C35.png)
 
-##### 问题 4：为什么工具中依赖的 pub 微应用默认没有被 code caching，而要放在 service worker 里，来自佚名的分析 [code caching没有生效的原因 （已解决）](https://cf.qunhequnhe.com/pages/viewpage.action?pageId=80377541568)
+#### 问题 4：为什么工具中依赖的 pub 微应用默认没有被 code caching，而要放在 service worker 里，来自佚名的分析 [code caching没有生效的原因 （已解决）](https://cf.qunhequnhe.com/pages/viewpage.action?pageId=80377541568)
 - 基于 v8 的 code caching 的 [策略](https://v8.dev/blog/code-caching-for-devs#:~:text=In%20particular%2C%20if%20a%20library%20consists%20of%20entirely%20lazily%20compiled%20functions%2C%20those%20functions%20won%E2%80%99t%20be%20cached%20even%20if%20they%20are%20used%20later.)——一个 script 只会 cache自身执行期间被编译过（一般只有执行之前才会compile code）的 function，所以公共包微应用的绝大部分函数都不会被cache。
 - 这些代码在接下里被业务微应用调用时，会在调用前被compile一遍，这可能是目前我们观察到compile code时间占init时间一半的部分原因。
 
-##### 问题 5：Node.js 中如何主动 code caching？
+#### 问题 5：Node.js 中如何主动 code caching？
 如果是在Node 中，可以用 v8-compile-cache 这个包。原理参考 [为什么利用 vm.Script 可以实现 Node.js 中的 code cache | 梅旭光的个人博客](https://meixg.cn/2021/02/04/nodejs-vm-script/)
 
-##### 问题 6： code caching 效果如何？
+#### 问题 6： code caching 效果如何？
 网上有份 code caching 前后效果对比：
 
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125514/7B4DEA4642958D0A2623C60E74AF94F0.png)
 
 从 CF 中看到的云设计工具的优化结果来看，非初次加载的时间能够直接降低近50%, (5s -> 3s)。另外 [bundle最佳code cache策略](https://cf.qunhequnhe.com/pages/viewpage.action?pageId=80381340291)，应用加载速度提升 28%
 
-##### 问题 7：主动触发 code caching 的应用场景有哪些：
+#### 问题 7：主动触发 code caching 的应用场景有哪些：
 1. 工具类单页面产品加载性能优化，如果 js 脚本多，编译花费大量时间，可以把变动不频繁的 js 主动做 code caching，提升再次执行的速度。
 2. FaaS 场景下减少 node 的启动时间。自动缩扩容是 K8S 的重要特性，面对忽然到来的大流量，需要在极短的时间对函数进行扩容并可以正常相应请求，这就对 Node.js 函数的启动时间有了较高的要求，公共模块在构建阶段提前编译成字节码打包到镜像中直接使用，来提升 faas 函数的启动时间。 （淘宝称有 40% 的速度提升）。  [淘系前端团队](https://fed.taobao.org/blog/taofed/do71ct/speed-node-start-time/)
 3. VS Code 启动性能优化，[淘系前端团队](https://fed.taobao.org/blog/taofed/do71ct/wpsf10/)
