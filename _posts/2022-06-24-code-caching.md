@@ -14,6 +14,7 @@
 Sourcemap 解决了源代码被压缩和混淆，导致 debug 困难的问题。它包含了源代码和生产代码的映射。主要应用在前端监控、报错排查。
 2011年，诞生 v3 版本标准([Source Map Revision 3 Proposal](https://sourcemaps.info/spec.html))，相对前两个版本进一步缩小了 map 文件体积。
 一个 sourcemap 文件内容大概长这样：
+
 ![](https://qhstaticssl.kujiale.com/image/png/1656061126252/6572F40EFD5469B27CA1DAB842880710.png)
 
 ##### 问题1：sourcemap 是在哪里配置生成的？
@@ -36,11 +37,12 @@ sit 和 prod 是两个不同的 sw 文件，所以 prod 不会自动添加 sourc
 
 注：
 1. tobdev 环境是不会被自动注入 sourcemap 的，因为该环境不支持 https，也就无法走 service worker 逻辑。
-2. 目前 pub 默认都会打出 sourcemap（[pub devtool 配置](https://gitlab.qunhequnhe.com/fe/def-next/def-services/builder/webpack4-builder/-/blob/default/presets/pub/src/index.ts#L66)默认为 'hidden-source-map'，不为源文件增加注释），现在也不用再手动加 sourcemap: true 构建参数。
+2. 目前 pub 默认都会打出 sourcemap（[pub devtool 配置](https://gitlab.qunhequnhe.com/fe/def-next/def-services/builder/webpack4-builder/-/blob/default/presets/pub/src/index.ts#L66) 默认为 'hidden-source-map'，不为源文件增加注释），现在也不用再手动加 sourcemap: true 构建参数。
 
 具体实现：
 pub 通过 **serviceworker** 拦截 fetch 事件，注入 sourcemap 注释，[查看核心代码](https://gitlab.qunhequnhe.com/fe/feinfra/cdnfallback-sw/-/blob/default/main_debug.js#L137)
-![code](//qhstaticssl.kujiale.com/image/png/1656061125981/B043762211126B4DCC14036FD7FE5098.png)
+
+![code](https://qhstaticssl.kujiale.com/image/png/1656061125981/B043762211126B4DCC14036FD7FE5098.png)
 
 ##### 问题5：那线上代码如何用 sourcemap 调试，又防止源码被别人查看呢？
 线上想源码调试的话，可以按照 [此规则对应关系(仅内网访问)](https://cf.qunhequnhe.com/pages/viewpage.action?pageId=80305366884#id-1.2.1.1pub%E5%BC%80%E5%8F%91%E6%89%8B%E5%86%8C-%E4%B8%83%E3%80%81%E8%B0%83%E8%AF%95%E7%BA%BF%E4%B8%8A%E4%BB%A3%E7%A0%81) 手动在 devtools 里加 sourcemap。
@@ -70,9 +72,11 @@ Service workers 可以拦截页面中的网络资源请求，当你发送请求
 
 ## V8 Code Caching
 啥是 Code Caching？ 首先回顾一下 V8 的运行机制。当前 V8 执行 JavaScript 流程图:
+
 ![V8](https://qhstaticssl.kujiale.com/image/png/1656061125975/FBFF8F7B1E8974BF09FE915CACBD8752.png)
 
 V8 使用 JIT (Just in time compilation) 来执行 JavaScript 代码，也就是说在 JS 脚本执行之前，**必须对其进行解析和编译**，这一步的开销是较大的。
+
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125643/941981A11EB47BD63879BF4DB6FD0AC3.png)
 
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125669/81FB2B64467DEBE0648171B0F3A64577.png)
@@ -80,6 +84,7 @@ V8 使用 JIT (Just in time compilation) 来执行 JavaScript 代码，也就是
 如图（来源网络）解析和编译 js 所花费的时间占到了整个 V8 运行周期总时间的三分之一。
 
 盘古首页中 V8 的 parse 和 compile（更具体的 V8 分析需用 trace 工具）：
+
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125727/4468BCB51E454D6DE4649242B38B3BD2.png)
 
 #### code caching 原理
@@ -91,7 +96,7 @@ V8 code caching 的原理（官博解释：[Code caching · V8](https://v8.dev/b
 简单来说，使用了code caching 后，当 JS 第一次被编译后，将生成的代码序列化后存储在磁盘上，后续再次加载时，会优先读取磁盘中的缓存，直接反序列化后执行，避免 JS 被从头编译造成重复开销。
 
 V8 中的缓存：
-目前在V8中实现了两个级别的缓存，每个 V8 实例的内存缓存（`Isolate`缓存，不同标签页无法共享）和代码序列化后的磁盘缓存。
+目前在V8中实现了两个级别的缓存，每个 V8 实例的内存缓存（`Isolate` 缓存，不同标签页无法共享）和代码序列化后的磁盘缓存。
 
 ![](https://qhstaticssl.kujiale.com/image/png/1656061126213/4F447CA6B261D9C377DF8F33B94CE736.png)
 
@@ -121,10 +126,11 @@ Chrome  从 42 开始引入 code caching（ref：[Chromium Blog: New JavaScript 
 比如 [GitHub - nolanlawson/optimize-js: Optimize a JS file for faster parsing (UNMAINTAINED)](https://github.com/nolanlawson/optimize-js) optimize-js 这个包曾用于把普通函数变成 IIFE，后来不维护了。
 IIFE 更快的原理是非 IIFE 会先被预解析然后再被完整解析，共被解析两次。而 IIFE 可以跳过预解析直接完整解析。
 预解析只会做语法分析和错误检查，不会生成 AST，关于预解析参考  [Blazingly fast parsing, part 2: lazy parsing · V8](https://v8.dev/blog/preparser#pife)
+
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125668/F6CDB02517E6C155ABEDA2F20D924C35.png)
 
 ##### 问题 4：为什么工具中依赖的 pub 微应用默认没有被 code caching，而要放在 service worker 里，来自佚名的分析 [code caching没有生效的原因 （已解决）](https://cf.qunhequnhe.com/pages/viewpage.action?pageId=80377541568)
-- 基于v8的code caching的[策略](https://v8.dev/blog/code-caching-for-devs#:~:text=In%20particular%2C%20if%20a%20library%20consists%20of%20entirely%20lazily%20compiled%20functions%2C%20those%20functions%20won%E2%80%99t%20be%20cached%20even%20if%20they%20are%20used%20later.)——一个 script 只会 cache自身执行期间被编译过（一般只有执行之前才会compile code）的 function，所以公共包微应用的绝大部分函数都不会被cache。
+- 基于 v8 的 code caching 的 [策略](https://v8.dev/blog/code-caching-for-devs#:~:text=In%20particular%2C%20if%20a%20library%20consists%20of%20entirely%20lazily%20compiled%20functions%2C%20those%20functions%20won%E2%80%99t%20be%20cached%20even%20if%20they%20are%20used%20later.)——一个 script 只会 cache自身执行期间被编译过（一般只有执行之前才会compile code）的 function，所以公共包微应用的绝大部分函数都不会被cache。
 - 这些代码在接下里被业务微应用调用时，会在调用前被compile一遍，这可能是目前我们观察到compile code时间占init时间一半的部分原因。
 
 ##### 问题 5：Node.js 中如何主动 code caching？
@@ -132,6 +138,7 @@ IIFE 更快的原理是非 IIFE 会先被预解析然后再被完整解析，共
 
 ##### 问题 6： code caching 效果如何？
 网上有份 code caching 前后效果对比：
+
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125514/7B4DEA4642958D0A2623C60E74AF94F0.png)
 
 从 CF 中看到的云设计工具的优化结果来看，非初次加载的时间能够直接降低近50%, (5s -> 3s)。另外 [bundle最佳code cache策略](https://cf.qunhequnhe.com/pages/viewpage.action?pageId=80381340291)，应用加载速度提升 28%
@@ -142,7 +149,8 @@ IIFE 更快的原理是非 IIFE 会先被预解析然后再被完整解析，共
 3. VS Code 启动性能优化，[淘系前端团队](https://fed.taobao.org/blog/taofed/do71ct/wpsf10/)
 
 ### 题外话： V8 字节码的前世今生
-字节码是一种`中间码`，它比机器码更抽象
+字节码是一种`中间码`，它比机器码更抽象。
+
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125718/4984D413F734E8BE49A378F963939D18.png)
 
 采用字节码的优点：
@@ -151,6 +159,7 @@ IIFE 更快的原理是非 IIFE 会先被预解析然后再被完整解析，共
 - 比如 java 早期口号 Compile Once，Run anywhere（一次编译到处运行），编译为 .class的字节码文件，再通过 JVM 转为机器码
 
 V8 早期没有生成字节码，直接生成机器码，比较激进（图片 from [JavaScript 引擎 V8 执行流程概述](http://blog.itpub.net/69912579/viewspace-2668277/)）：
+
 ![](https://qhstaticssl.kujiale.com/image/png/1656061126222/FF2B11A9A0D77F477FA5BC384C14E861.png)
 
 而为什么现在 V8 字节码又回来了：
@@ -160,6 +169,7 @@ V8 早期没有生成字节码，直接生成机器码，比较激进（图片 f
 ![](https://qhstaticssl.kujiale.com/image/png/1656061126291/572543F5344E00ECDEBFCD01573758FD.png)
 
 虽然采用字节码在执行速度上稍慢于机器代码，但是整体上权衡利弊，采用字节码也许是最优解。因为采用字节码除了降低内存之外，还提升了代码的启动速度，并降低了代码的复杂度，而牺牲的仅仅是一点执行效率。
+
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125984/D830A9EC44548FEF0227D5B1155AEBA1.png)
 
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125693/A3CA53AC0030466763D3856DE054F68D.png) 
@@ -170,7 +180,8 @@ V8 早期没有生成字节码，直接生成机器码，比较激进（图片 f
 
 
 ### 其他最佳实践：
-[The cost of JavaScript in 2019 · V8](https://v8.dev/blog/cost-of-javascript-2019) 提到，JSON 的解析效率比 js 高，并且不会被解析两次。如果对象大于 10KB，应考虑用 JSON。
+[The cost of JavaScript in 2019 · V8](https://v8.dev/blog/cost-of-javascript-2019) 提到，JSON 的解析效率比 js 高（1 ~ 2 倍），并且不会被解析两次。如果对象大于 10KB，应考虑用 JSON。
+
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125761/CC18B869EEF0DD2255D3B08FEE7CA433.png)
 
 ![](https://qhstaticssl.kujiale.com/image/png/1656061125568/D88711DB694695C2256F2F4C11E98720.png)
