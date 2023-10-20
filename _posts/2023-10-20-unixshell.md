@@ -12,8 +12,8 @@ title: 你可能用的到的 Unix 知识
 工作生活中，少不了和 Unix/Linux 系统接触，比如 MacOS、Linux 服务器、Openwrt 软路由配置和部署等。偶尔也需要写点 Shell 脚本（尽管我们可以用 Shell 脚本当壳，核心内容用 node.js 来写）。希望这点实用为主的分享对大家有用。
 
 列举几个公司内用到的 shell 脚本场景（需内网访问）：
-1.  https://gitlab.qunhequnhe.com/fe/febu/pr-common/blob/master/build_pr_common.sh  pr-common 的构建部署：主要事项：版本号输出到 njk 、 执行 saas 脚本（因 pr-common 不支持直接引入微应用，构建时同步微应用的产物资源到 njk 中）、打包，上传 cos
-2.  https://gitlab.qunhequnhe.com/def/docker-images/-/blob/master/serverless/alinode-faas/docker-entrypoint.sh
+1.  [pr-common 的构建部署](https://gitlab.qunhequnhe.com/fe/febu/pr-common/blob/master/build_pr_common.sh)：主要事项：版本号输出到 njk 、 执行 saas 脚本（因 pr-common 不支持直接引入微应用，构建时同步微应用的产物资源到 njk 中）、打包，上传 cos
+2.  [Serverless 部署相关](https://gitlab.qunhequnhe.com/def/docker-images/-/blob/master/serverless/alinode-faas/docker-entrypoint.sh)
 
 ## 二、文件系统相关
 ### 什么是 inode
@@ -36,6 +36,7 @@ $ ls -li link.txt
 - 因为系统通过 inode 号码（而不是文件名），识别运行中的文件。
 - 更新的时候，新版文件以同样的文件名，生成一个新的 inode，不会影响到运行中的文件。
 - 等到下一次运行这个软件的时候，文件名就自动指向新版文件，旧版文件的 inode 则被回收。
+
 ### 硬链接和软链接
 
 ```bash
@@ -90,6 +91,7 @@ find ~/ -inum 45349431
 ```
 
 - 但是硬链接的方式也有坑，如果你在 node_modules/ 下修改了某个文件进行调试，忘记改回去，在其他项目也会被误引入。因为本质上你改的是同个文件。
+
 ### 文件权限
 
 ```bash
@@ -115,6 +117,7 @@ $ chmod 755 script.sh
 
 Tips: 目录的执行权限。对于目录来说，如果无执行权限，则对应用户 cd 不进去。（为啥？不是有读权限了吗？）
 - 目录也是一种文件，目录文件的读权限（r）是针对目录文件本身。如果只有读权限，无法获取储存在 inode 节点中的其他信息，而读取 inode 节点内的信息需要目录文件的执行权限（x）。
+
 ### 输出重定向
 
 ```sh
@@ -201,7 +204,7 @@ $ mount /dev/sdb1 /mnt/sdb1
 - 防火墙 iptables
 - 定时任务 crontab
 
-> 分享个假期前开发的网络小工具（nali），方便查询 ip 归属地： https://github.com/fantasyroot/nali-ip-cli
+> 分享个假期前开发的网络小工具（nali），方便查询 ip 归属地： [https://github.com/fantasyroot/nali-ip-cli](https://github.com/fantasyroot/nali-ip-cli)
 
 ```bash
 $ nali 1.145.1.4
